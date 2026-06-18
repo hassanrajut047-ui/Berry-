@@ -17,7 +17,7 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 
 // ===== IMPORTANT: CHANGE THIS TO YOUR VERCEL BACKEND URL =====
 // If your Vercel backend URL is different, change it here!
-const API_URL = 'https://berry-backend.vercel.app/api';
+const API_URL = 'https://berry-ashy.vercel.app/api';
 // ==============================================================
 
 let authToken = localStorage.getItem('token') || null;
