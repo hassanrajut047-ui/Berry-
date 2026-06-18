@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Berry Berry PRO | Inventory + Credit Management</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+    <!-- ===== LOGIN OVERLAY ===== -->
+    <div id="loginOverlay" style="display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:9999;justify-content:center;align-items:center;">
+        <div style="background:var(--card-bg);padding:40px;border-radius:16px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+            <div style="text-align:center;margin-bottom:20px;">
+                <i class="fas fa-tint" style="font-size:40px;color:var(--primary);"></i>
+                <h2 style="color:var(--primary);margin-top:8px;">Berry Berry PRO</h2>
+                <p style="color:var(--text-light);">Inventory & Credit Management</p>
+            </div>
+            <input type="text" id="loginUser" placeholder="Username (e.g. admin)" style="width:100%;padding:12px;margin-bottom:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);" />
+            <input type="password" id="loginPass" placeholder="Password" style="width:100%;padding:12px;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);" />
+            <button onclick="app.login(document.getElementById('loginUser').value, document.getElementById('loginPass').value)" style="width:100%;padding:14px;background:var(--primary);color:white;border:none;border-radius:10px;font-weight:600;font-size:16px;cursor:pointer;">Login</button>
+            <p style="margin-top:12px;font-size:12px;color:var(--text-light);text-align:center;">Default: <strong>admin</strong> / <strong>admin123</strong></p>
+        </div>
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo"><i class="fas fa-tint"></i><span>Berry PRO</span></div>
+            <p class="tagline">Sukkur • Credit + Stock</p>
+        </div>
+        <ul class="nav-links">
+            <li class="active" data-page="dashboard" onclick="app.navClick(this, 'dashboard')"><a href="javascript:void(0)"><i class="fas fa-chart-line"></i><span>Dashboard</span></a></li>
+            <li data-page="inventory" onclick="app.navClick(this, 'inventory')"><a href="javascript:void(0)"><i class="fas fa-boxes-stacked"></i><span>Inventory</span></a></li>
+            <li data-page="products" onclick="app.navClick(this, 'products')"><a href="javascript:void(0)"><i class="fas fa-bottle-water"></i><span>Products</span></a></li>
+            <li data-page="sales" onclick="app.navClick(this, 'sales')"><a href="javascript:void(0)"><i class="fas fa-cart-shopping"></i><span>Sales</span></a></li>
+            <li data-page="customers" onclick="app.navClick(this, 'customers')"><a href="javascript:void(0)"><i class="fas fa-users"></i><span>Customers</span></a></li>
+            <li data-page="reports" onclick="app.navClick(this, 'reports')"><a href="javascript:void(0)"><i class="fas fa-file-invoice"></i><span>Reports</span></a></li>
+            <li data-page="settings" onclick="app.navClick(this, 'settings')"><a href="javascript:void(0)"><i class="fas fa-gear"></i><span>Settings</span></a></li>
+            <li onclick="app.logout()" style="margin-top:20px;border-top:1px solid var(--border);padding-top:12px;">
+                <a href="javascript:void(0)"><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i><span style="color:var(--danger);">Logout</span></a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Admin+User&background=0ea5e9&color=fff" alt="User" />
+                <div><p class="user-name" id="currentUserName">Admin</p><p class="user-role" id="currentUserRole">admin</p></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="main-content">
+        <header class="top-header">
+            <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Search products..." id="globalSearch" /></div>
+            <div class="header-actions">
+                <div class="notification-wrapper">
+                    <button class="icon-btn" onclick="app.toggleNotifications()"><i class="fas fa-bell"></i><span class="badge" id="notifBadge">0</span></button>
+                    <div class="notification-panel" id="notificationPanel">
+                        <div class="notification-header"><h4>Notifications</h4><button onclick="app.clearNotifications()">Clear</button></div>
+                        <div class="notification-list" id="notificationList"></div>
+                    </div>
+                </div>
+                <button class="icon-btn" onclick="app.toggleTheme()"><i class="fas fa-moon" id="themeIcon"></i></button>
+            </div>
+        </header>
+
+        <!-- ===== DASHBOARD ===== -->
+        <section class="page active" id="dashboard">
+            <div class="page-header"><h1>Dashboard</h1><p>Real-time stock & credit overview</p></div>
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-info"><h3 id="totalProducts">0</h3><p>Total Products</p></div></div>
+                <div class="stat-card green"><div class="stat-icon"><i class="fas fa-bottle-water"></i></div><div class="stat-info"><h3 id="totalStock">0</h3><p>Total Stock</p></div></div>
+                <div class="stat-card orange"><div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-info"><h3 id="lowStockCount">0</h3><p>Low Stock</p></div></div>
+                <div class="stat-card purple"><div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div><div class="stat-info"><h3 id="todaySales">Rs. 0</h3><p>Today's Sales</p></div></div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card"><div class="card-header"><h3><i class="fas fa-chart-bar"></i> Stock Overview</h3></div><div class="chart-container"><canvas id="stockChart"></canvas></div></div>
+                <div class="card"><div class="card-header"><h3><i class="fas fa-clock-rotate-left"></i> Recent Activity</h3></div><div class="activity-list" id="activityList"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h3><i class="fas fa-triangle-exclamation"></i> Low Stock Alert</h3><button class="btn btn-outline" onclick="app.goToPage('inventory')">View All</button></div>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>Product</th><th>Size</th><th>Stock</th><th>Min</th><th>Status</th></tr></thead><tbody id="lowStockTable"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ===== INVENTORY ===== -->
+        <section class="page" id="inventory">
+            <div class="page-header"><h1>Inventory</h1><button class="btn btn-primary" onclick="app.openModal('addStockModal')"><i class="fas fa-plus"></i> Add Stock</button></div>
+            <div class="card">
+                <div class="table-toolbar">
+                    <div class="filter-group">
+                        <select id="inventoryFilter"><option value="all">All</option><option value="low">Low Stock</option><option value="out">Out of Stock</option></select>
+                        <input type="text" placeholder="Search..." id="inventorySearch" />
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>ID</th><th>Name</th><th>Size</th><th>Category</th><th>Stock</th><th>Min</th><th>Price (Rs)</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead><tbody id="inventoryTable"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ===== PRODUCTS ===== -->
+        <section class="page" id="products">
+            <div class="page-header"><h1>Products</h1><button class="btn btn-primary" onclick="app.openModal('addProductModal')"><i class="fas fa-plus"></i> Add Product</button></div>
+            <div class="products-grid" id="productsGrid"></div>
+        </section>
+
+        <!-- ===== SALES ===== -->
+        <section class="page" id="sales">
+            <div class="page-header"><h1>Sales</h1><button class="btn btn-primary" onclick="app.openModal('addSaleModal')"><i class="fas fa-plus"></i> New Sale</button></div>
+            <div class="card">
+                <div class="table-toolbar">
+                    <div class="filter-group">
+                        <input type="date" id="salesDateFrom" /><input type="date" id="salesDateTo" />
+                        <button class="btn btn-outline" onclick="app.filterSales()">Filter</button>
+                    </div>
+                </div>
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items</th><th>Total (Rs)</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody id="salesTable"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ===== CUSTOMERS ===== -->
+        <section class="page" id="customers">
+            <div class="page-header"><h1>Customers</h1><button class="btn btn-primary" onclick="app.openModal('addCustomerModal')"><i class="fas fa-plus"></i> Add Customer</button></div>
+            <div class="card">
+                <div class="table-responsive"><table class="data-table"><thead><tr><th>Name</th><th>Phone</th><th>Orders</th><th>Balance (Rs)</th><th>Credit Limit</th><th>Status</th><th>Actions</th></tr></thead><tbody id="customersTable"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ===== REPORTS ===== -->
+        <section class="page" id="reports">
+            <div class="page-header"><h1>Reports</h1></div>
+            <div class="reports-grid">
+                <div class="card report-card" onclick="app.generateReport('stock')"><i class="fas fa-boxes-stacked"></i><h3>Stock Report</h3></div>
+                <div class="card report-card" onclick="app.generateReport('sales')"><i class="fas fa-chart-line"></i><h3>Sales Report</h3></div>
+                <div class="card report-card" onclick="app.generateReport('profit')"><i class="fas fa-coins"></i><h3>Profit & Loss</h3></div>
+                <div class="card report-card" onclick="app.generateReport('customer')"><i class="fas fa-users"></i><h3>Customer Report</h3></div>
+            </div>
+            <div class="card" id="reportResult" style="display:none;"><div class="card-header"><h3 id="reportTitle">Report</h3><button class="btn btn-outline" onclick="app.exportReport()"><i class="fas fa-download"></i> Export CSV</button></div><div id="reportContent"></div></div>
+        </section>
+
+        <!-- ===== SETTINGS ===== -->
+        <section class="page" id="settings">
+            <div class="page-header"><h1>Settings</h1></div>
+            <div class="settings-grid">
+                <div class="card"><div class="card-header"><h3><i class="fas fa-building"></i> Company</h3></div><form class="settings-form" id="companyForm"><div class="form-group"><label>Name</label><input type="text" id="companyName" value="Berry Berry Foods" /></div><div class="form-group"><label>Address</label><input type="text" id="companyAddress" value="Sukkur" /></div><button class="btn btn-primary">Save</button></form></div>
+                <div class="card"><div class="card-header"><h3><i class="fas fa-database"></i> Data</h3></div><div class="data-actions"><button class="btn btn-outline" onclick="app.exportData()"><i class="fas fa-download"></i> Export JSON</button><button class="btn btn-outline" onclick="app.importData()"><i class="fas fa-upload"></i> Import JSON</button></div></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== MODALS ===== -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <!-- ===== ADD PRODUCT (With Expiry Date) ===== -->
+    <div class="modal" id="addProductModal">
+        <div class="modal-header"><h3><i class="fas fa-bottle-water"></i> Add Product</h3><button class="modal-close" onclick="app.closeModal('addProductModal')"><i class="fas fa-xmark"></i></button></div>
+        <form class="modal-body" id="addProductForm">
+            <div class="form-row">
+                <div class="form-group"><label>Name *</label><input type="text" name="name" required /></div>
+                <div class="form-group"><label>Brand</label><input type="text" name="brand" /></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Size *</label><select name="size" required><option>250ml</option><option>500ml</option><option>1L</option><option>1.5L</option><option>5L</option><option>19L</option></select></div>
+                <div class="form-group"><label>Category</label><select name="category" required><option>Mineral Water</option><option>Drinking Water</option><option>Flavored Water</option><option>Dispenser</option></select></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Price (Rs) *</label><input type="number" name="price" required /></div>
+                <div class="form-group"><label>Cost Price</label><input type="number" name="costPrice" /></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Initial Stock</label><input type="number" name="stock" required /></div>
+                <div class="form-group"><label>Min Stock</label><input type="number" name="minStock" required /></div>
+            </div>
+            <div class="form-group"><label>Expiry Date</label><input type="date" name="expiryDate" /></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addProductModal')">Cancel</button><button type="submit" class="btn btn-primary">Add</button></div>
+        </form>
+    </div>
+
+    <!-- ===== ADD CUSTOMER (With Credit Limit) ===== -->
+    <div class="modal" id="addCustomerModal">
+        <div class="modal-header"><h3><i class="fas fa-user-plus"></i> Add Customer</h3><button class="modal-close" onclick="app.closeModal('addCustomerModal')"><i class="fas fa-xmark"></i></button></div>
+        <form class="modal-body" id="addCustomerForm">
+            <div class="form-row"><div class="form-group"><label>Name *</label><input type="text" name="name" required /></div><div class="form-group"><label>Phone *</label><input type="text" name="phone" required /></div></div>
+            <div class="form-group"><label>Address</label><textarea name="address" rows="2"></textarea></div>
+            <div class="form-row">
+                <div class="form-group"><label>Opening Balance</label><input type="number" name="balance" value="0" /></div>
+                <div class="form-group"><label>Credit Limit (Rs)</label><input type="number" name="creditLimit" value="5000" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addCustomerModal')">Cancel</button><button type="submit" class="btn btn-primary">Add</button></div>
+        </form>
+    </div>
+
+    <!-- ===== ADD STOCK ===== -->
+    <div class="modal" id="addStockModal">
+        <div class="modal-header"><h3><i class="fas fa-plus-circle"></i> Add Stock</h3><button class="modal-close" onclick="app.closeModal('addStockModal')"><i class="fas fa-xmark"></i></button></div>
+        <form class="modal-body" id="addStockForm">
+            <div class="form-group"><label>Product</label><select name="productId" id="stockProductSelect" required></select></div>
+            <div class="form-row"><div class="form-group"><label>Quantity</label><input type="number" name="quantity" required /></div><div class="form-group"><label>Unit Cost</label><input type="number" name="unitCost" /></div></div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addStockModal')">Cancel</button><button type="submit" class="btn btn-primary">Add Stock</button></div>
+        </form>
+    </div>
+
+    <!-- ===== ADD SALE ===== -->
+    <div class="modal modal-lg" id="addSaleModal">
+        <div class="modal-header"><h3><i class="fas fa-cart-plus"></i> New Sale</h3><button class="modal-close" onclick="app.closeModal('addSaleModal')"><i class="fas fa-xmark"></i></button></div>
+        <form class="modal-body" id="addSaleForm">
+            <div class="form-row"><div class="form-group"><label>Customer</label><select name="customerId" id="saleCustomerSelect" required></select></div><div class="form-group"><label>Date</label><input type="date" name="date" id="saleDate" /></div></div>
+            <div class="sale-items" id="saleItems">
+                <div class="sale-item-row">
+                    <div class="form-group"><select class="sale-product" required onchange="app.updateSalePrice(this)"></select></div>
+                    <div class="form-group"><input type="number" class="sale-qty" value="1" min="1" onchange="app.calculateSaleTotal()" /></div>
+                    <div class="form-group"><input type="number" class="sale-price" readonly /></div>
+                    <div class="form-group"><input type="number" class="sale-total" readonly /></div>
+                    <button type="button" class="btn btn-icon btn-danger" onclick="app.removeSaleItem(this)"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline" onclick="app.addSaleItem()"><i class="fas fa-plus"></i> Add Item</button>
+            <div class="sale-summary">
+                <div class="form-row"><div class="form-group"><label>Subtotal</label><input type="number" id="saleSubtotal" readonly /></div><div class="form-group"><label>Discount</label><input type="number" id="saleDiscount" value="0" onchange="app.calculateSaleTotal()" /></div><div class="form-group"><label>Grand Total</label><input type="number" id="saleGrandTotal" readonly /></div></div>
+                <div class="form-row"><div class="form-group"><label>Payment</label><select name="paymentMethod"><option>Cash</option><option>Bank Transfer</option><option>JazzCash</option><option>EasyPaisa</option><option>Credit</option></select></div><div class="form-group"><label>Amount Paid</label><input type="number" id="saleAmountPaid" onchange="app.calculateSaleBalance()" /></div><div class="form-group"><label>Balance</label><input type="number" id="saleBalance" readonly /></div></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addSaleModal')">Cancel</button><button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Complete Sale</button></div>
+        </form>
+    </div>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
