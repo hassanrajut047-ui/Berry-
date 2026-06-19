@@ -1,10 +1,7 @@
-// Berry Berry PRO - Frontend
+// Berry Berry PRO - Frontend (No Login)
 // Backend API Connection
 
 const API_URL = 'https://berry-ashy.vercel.app/api';
-
-let authToken = localStorage.getItem('token') || null;
-let currentUser = null;
 
 const app = {
     data: {
@@ -22,59 +19,14 @@ const app = {
         }
     },
 
-    // ---------- AUTH ----------
-    async login(username, password) {
-        try {
-            const res = await fetch(API_URL + '/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (data.token) {
-                localStorage.setItem('token', data.token);
-                authToken = data.token;
-                currentUser = data.user;
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('currentUserName').textContent = data.user.username;
-                document.getElementById('currentUserRole').textContent = data.user.role;
-                this.showToast('Logged in successfully!', 'success');
-                this.loadData();
-                return true;
-            } else {
-                this.showToast(data.msg || 'Login failed', 'error');
-                return false;
-            }
-        } catch (e) {
-            this.showToast('Server error. Please check your connection.', 'error');
-            return false;
-        }
-    },
-
-    logout() {
-        localStorage.removeItem('token');
-        authToken = null;
-        currentUser = null;
-        document.getElementById('loginOverlay').style.display = 'flex';
-        this.showToast('Logged out successfully', 'warning');
-    },
-
-    // ---------- API Helpers ----------
+    // ---------- API Helpers (No Auth) ----------
     async fetchAPI(endpoint, options) {
         options = options || {};
         const headers = {
-            'Content-Type': 'application/json',
-            'x-auth-token': authToken
+            'Content-Type': 'application/json'
         };
         try {
             const res = await fetch(API_URL + endpoint, Object.assign({}, options, { headers: headers }));
-            if (res.status === 401) {
-                this.showToast('Session expired, please login again', 'error');
-                localStorage.removeItem('token');
-                authToken = null;
-                document.getElementById('loginOverlay').style.display = 'flex';
-                return null;
-            }
             return await res.json();
         } catch (e) {
             this.showToast('Network error. Please check your connection.', 'error');
@@ -84,10 +36,6 @@ const app = {
 
     // ---------- Load Data ----------
     async loadData() {
-        if (!authToken) {
-            document.getElementById('loginOverlay').style.display = 'flex';
-            return;
-        }
         try {
             const [products, customers, sales, stats] = await Promise.all([
                 this.fetchAPI('/products'),
@@ -116,14 +64,16 @@ const app = {
         this.loadTheme();
         this.setupEventListeners();
 
-        if (authToken) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            this.loadData();
-        } else {
-            document.getElementById('loginOverlay').style.display = 'flex';
-        }
+        // Hide login overlay immediately
+        var loginOverlay = document.getElementById('loginOverlay');
+        if (loginOverlay) loginOverlay.style.display = 'none';
+
+        document.getElementById('currentUserName').textContent = 'Admin';
+        document.getElementById('currentUserRole').textContent = 'admin';
 
         document.getElementById('saleDate').valueAsDate = new Date();
+
+        this.loadData();
     },
 
     navClick(li, page) {
@@ -168,20 +118,6 @@ const app = {
             const panel = document.getElementById('notificationPanel');
             if (wrapper && panel && panel.classList.contains('active') && !wrapper.contains(e.target)) {
                 self.closeNotifications();
-            }
-        });
-
-        document.getElementById('loginPass').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const username = document.getElementById('loginUser').value;
-                const password = document.getElementById('loginPass').value;
-                self.login(username, password);
-            }
-        });
-
-        document.getElementById('loginUser').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('loginPass').focus();
             }
         });
 
@@ -320,7 +256,8 @@ const app = {
         var chartH = h - padding * 2;
 
         var products = this.data.products.slice(0, 6);
-        var maxStock = Math.max.apply(Math, products.map(function(p) { return p.stock; }).concat([1]));
+        var stocks = products.map(function(p) { return p.stock; });
+        var maxStock = Math.max.apply(Math, stocks.concat([1]));
         var barWidth = chartW / products.length * 0.6;
         var gap = chartW / products.length;
 
