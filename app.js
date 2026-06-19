@@ -15,9 +15,10 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     };
 }
 
-// ===== IMPORTANT: CHANGE THIS TO YOUR VERCEL BACKEND URL =====
-// If your Vercel backend URL is different, change it here!
-const API_URL = 'https://berry-ashy.vercel.app/api';
+// ===== AUTO-DETECT API URL =====
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000/api'
+    : 'https://berry-ashy.vercel.app/api'; // <-- CHANGE THIS TO YOUR ACTUAL VERCEL URL
 // ==============================================================
 
 let authToken = localStorage.getItem('token') || null;
@@ -58,8 +59,6 @@ const app = {
                 document.getElementById('currentUserRole').textContent = data.user.role;
                 this.showToast('Logged in successfully!', 'success');
                 this.loadData();
-                this.renderAll();
-                this.updateDashboard();
                 return true;
             } else {
                 this.showToast(data.msg || 'Login failed', 'error');
@@ -144,7 +143,7 @@ const app = {
         }
         
         document.getElementById('saleDate').valueAsDate = new Date();
-        document.getElementById('purchaseDate').valueAsDate = new Date();
+        // REMOVED: document.getElementById('purchaseDate').valueAsDate = new Date();
     },
 
     setupNavigation() {
@@ -214,12 +213,7 @@ const app = {
         document.getElementById('inventoryFilter').addEventListener('change', () => this.renderInventory());
         document.getElementById('globalSearch').addEventListener('input', (e) => this.globalSearch(e.target.value));
 
-        const purchaseQty = document.querySelector('#addPurchaseForm [name="quantity"]');
-        const purchaseCost = document.querySelector('#addPurchaseForm [name="unitCost"]');
-        if (purchaseQty && purchaseCost) {
-            purchaseQty.addEventListener('input', () => this.calcPurchaseTotal());
-            purchaseCost.addEventListener('input', () => this.calcPurchaseTotal());
-        }
+        // REMOVED: All addPurchaseForm references that don't exist in HTML
     },
 
     openModal(modalId) {
@@ -258,9 +252,13 @@ const app = {
         const totalStock = this.data.products.reduce((sum, p) => sum + p.stock, 0);
         const lowStock = this.data.products.filter(p => p.stock <= p.minStock).length;
 
+        // FIXED: Proper date comparison
         const today = new Date().toISOString().split('T')[0];
         const todaySales = this.data.sales
-            .filter(s => s.date === today)
+            .filter(s => {
+                const saleDate = new Date(s.date).toISOString().split('T')[0];
+                return saleDate === today;
+            })
             .reduce((sum, s) => sum + s.grandTotal, 0);
 
         document.getElementById('totalProducts').textContent = totalProducts;
@@ -349,7 +347,7 @@ const app = {
         let filtered = this.data.products;
         if (filter === 'low') filtered = filtered.filter(p => p.stock <= p.minStock);
         if (filter === 'out') filtered = filtered.filter(p => p.stock === 0);
-        if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search) || p.brand.toLowerCase().includes(search));
+        if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search) || (p.brand && p.brand.toLowerCase().includes(search)));
 
         tbody.innerHTML = filtered.map(p => {
             let status = 'in-stock';
@@ -358,7 +356,8 @@ const app = {
             else if (p.stock <= p.minStock) { status = 'low-stock'; statusText = 'Low Stock'; }
 
             const expiryDate = p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A';
-            return '<tr><td>#' + p.id + '</td><td><strong>' + p.name + '</strong></td><td>' + p.size + '</td><td>' + p.category + '</td><td>' + p.stock + '</td><td>' + p.minStock + '</td><td>Rs. ' + p.price + '</td><td>' + expiryDate + '</td><td><span class="status-badge ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon" onclick="app.deleteProduct(\'' + p._id + '\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
+            // FIXED: Use p._id instead of p.id
+            return '<tr><td>#' + p._id.substr(-6).toUpperCase() + '</td><td><strong>' + p.name + '</strong></td><td>' + p.size + '</td><td>' + p.category + '</td><td>' + p.stock + '</td><td>' + p.minStock + '</td><td>Rs. ' + p.price + '</td><td>' + expiryDate + '</td><td><span class="status-badge ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon" onclick="app.deleteProduct(\\'' + p._id + '\\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
         }).join('');
     },
 
@@ -370,7 +369,7 @@ const app = {
             if (p.stock === 0) { badgeClass = 'danger'; badgeText = 'Out of Stock'; }
             else if (p.stock <= p.minStock) { badgeClass = 'warning'; badgeText = 'Low Stock'; }
 
-            return '<div class="product-card"><div class="product-image"><i class="fas fa-bottle-water"></i><span class="product-badge status-badge ' + (badgeClass === 'success' ? 'in-stock' : badgeClass === 'warning' ? 'low-stock' : 'out-stock') + '">' + badgeText + '</span></div><div class="product-info"><h4>' + p.name + '</h4><p class="brand">' + p.brand + ' | ' + p.category + '</p><p style="font-size:12px;color:var(--text-light)">' + p.size + ' | ' + p.description + '</p><div class="product-meta"><span class="price">Rs. ' + p.price + '</span><span class="stock">' + p.stock + ' in stock</span></div></div><div class="product-actions"><button onclick="app.deleteProduct(\'' + p._id + '\')"><i class="fas fa-trash"></i> Delete</button></div></div>';
+            return '<div class="product-card"><div class="product-image"><i class="fas fa-bottle-water"></i><span class="product-badge status-badge ' + (badgeClass === 'success' ? 'in-stock' : badgeClass === 'warning' ? 'low-stock' : 'out-stock') + '">' + badgeText + '</span></div><div class="product-info"><h4>' + p.name + '</h4><p class="brand">' + (p.brand || 'Berry Berry') + ' | ' + p.category + '</p><p style="font-size:12px;color:var(--text-light)">' + p.size + ' | ' + (p.description || '') + '</p><div class="product-meta"><span class="price">Rs. ' + p.price + '</span><span class="stock">' + p.stock + ' in stock</span></div></div><div class="product-actions"><button onclick="app.deleteProduct(\\'' + p._id + '\\')"><i class="fas fa-trash"></i> Delete</button></div></div>';
         }).join('');
     },
 
@@ -380,7 +379,8 @@ const app = {
             const customer = this.data.customers.find(c => c._id === s.customerId);
             const customerName = customer ? customer.name : 'Unknown';
             const statusClass = s.status === 'paid' ? 'paid' : s.status === 'credit' ? 'credit' : 'pending';
-            return `<tr><td><strong>${s.id}</strong></td><td>${s.date}</td><td>${customerName}</td><td>${s.items.length} item(s)</td><td>Rs. ${s.grandTotal.toLocaleString()}</td><td>${s.paymentMethod}</td><td><span class="status-badge ${statusClass}">${s.status.toUpperCase()}</span></td><td><button class="btn btn-icon" onclick="app.viewSale('${s.id}')" title="View"><i class="fas fa-eye"></i></button></td></tr>`;
+            // FIXED: Use s._id for viewSale since backend uses MongoDB _id
+            return `<tr><td><strong>${s.id || s._id}</strong></td><td>${new Date(s.date).toLocaleDateString()}</td><td>${customerName}</td><td>${s.items.length} item(s)</td><td>Rs. ${s.grandTotal.toLocaleString()}</td><td>${s.paymentMethod}</td><td><span class="status-badge ${statusClass}">${s.status.toUpperCase()}</span></td><td><button class="btn btn-icon" onclick="app.viewSale('${s._id}')" title="View"><i class="fas fa-eye"></i></button></td></tr>`;
         }).join('');
     },
 
@@ -389,7 +389,7 @@ const app = {
         tbody.innerHTML = this.data.customers.map(c => {
             const status = c.balance > c.creditLimit ? 'over-limit' : 'good';
             const statusText = c.balance > c.creditLimit ? '⚠️ Over Limit' : '✅ Good';
-            return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.phone + '</td><td>' + c.orders + '</td><td>Rs. ' + c.balance.toLocaleString() + '</td><td>Rs. ' + c.creditLimit + '</td><td><span class="customer-status ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon btn-danger" onclick="app.deleteCustomer(\'' + c._id + '\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
+            return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.phone + '</td><td>' + (c.orders || 0) + '</td><td>Rs. ' + c.balance.toLocaleString() + '</td><td>Rs. ' + c.creditLimit + '</td><td><span class="customer-status ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon btn-danger" onclick="app.deleteCustomer(\\'' + c._id + '\\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
         }).join('');
     },
 
@@ -435,13 +435,23 @@ const app = {
         const form = e.target;
         const productId = form.productId.value;
         const qty = parseInt(form.quantity.value);
+        const unitCost = parseFloat(form.unitCost.value) || 0;
         const product = this.data.products.find(p => p._id === productId);
         if (product) {
-            product.stock += qty;
+            const updatedProduct = { ...product };
+            updatedProduct.stock += qty;
+            // Optionally update cost price if provided
+            if (unitCost > 0) {
+                updatedProduct.costPrice = unitCost;
+            }
             await this.fetchAPI('/products/' + productId, {
                 method: 'PUT',
-                body: JSON.stringify(product)
+                body: JSON.stringify(updatedProduct)
             });
+            // Update local data
+            product.stock = updatedProduct.stock;
+            if (unitCost > 0) product.costPrice = unitCost;
+            
             this.addActivity('stock', 'Stock added: ' + product.name + ' +' + qty + ' bottles');
             this.renderAll();
             this.updateDashboard();
@@ -474,7 +484,7 @@ const app = {
         const balance = grandTotal - amountPaid;
 
         const saleData = {
-            id: 'INV-' + String(this.data.sales.length + 1).padStart(3, '0'),
+            id: 'INV-' + Date.now(), // Better unique ID using timestamp
             date: form.date.value,
             customerId: form.customerId.value,
             items,
@@ -493,20 +503,18 @@ const app = {
         });
 
         if (result) {
-            const customer = this.data.customers.find(c => c._id === saleData.customerId);
-            if (customer) {
-                customer.balance += balance;
-                customer.orders += 1;
-            }
-            // Update local stock
-            items.forEach(item => {
-                const p = this.data.products.find(pr => pr._id === item.productId);
-                if (p) p.stock -= item.qty;
-            });
+            // REMOVED: Don't update customer balance here - backend already does it
+            // REMOVED: Don't deduct stock here - backend already does it
+            
+            // Update local data from server response or reload
             this.data.sales.push(result);
+            
+            const customer = this.data.customers.find(c => c._id === saleData.customerId);
             this.addActivity('sale', 'New sale: ' + (customer ? customer.name : 'Unknown') + ' - Rs. ' + grandTotal.toLocaleString());
-            this.renderAll();
-            this.updateDashboard();
+            
+            // Reload data to get updated balances and stock from server
+            await this.loadData();
+            
             this.closeModal('addSaleModal');
             form.reset();
             this.resetSaleItems();
@@ -515,7 +523,7 @@ const app = {
             // WhatsApp integration
             if (customer && customer.phone) {
                 const msg = `Dear ${customer.name}, your invoice ${saleData.id} for Rs. ${grandTotal} is ready. Balance: Rs. ${balance}. Thank you!`;
-                const url = `https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+                const url = `https://wa.me/${customer.phone.replace(/\\D/g, '')}?text=${encodeURIComponent(msg)}`;
                 window.open(url, '_blank');
             }
         }
@@ -549,12 +557,16 @@ const app = {
         e.preventDefault();
         this.data.settings.companyName = document.getElementById('companyName').value;
         this.data.settings.companyAddress = document.getElementById('companyAddress').value;
-        this.data.settings.companyPhone = document.getElementById('companyPhone').value;
+        // REMOVED: companyPhone reference that doesn't exist in HTML
         this.showToast('Company settings saved!', 'success');
     },
 
     // ---------- UI Helpers ----------
     addSaleItem() {
+        if (this.data.products.length === 0) {
+            this.showToast('Please add products first!', 'warning');
+            return;
+        }
         const container = document.getElementById('saleItems');
         const productOptions = this.data.products.map(p => '<option value="' + p._id + '">' + p.name + ' - ' + p.size + '</option>').join('');
         const row = document.createElement('div');
@@ -629,10 +641,21 @@ const app = {
     },
 
     viewSale(id) {
-        const sale = this.data.sales.find(s => s.id === id);
+        const sale = this.data.sales.find(s => s._id === id);
         if (sale) {
             const customer = this.data.customers.find(c => c._id === sale.customerId);
-            alert('Invoice: ' + sale.id + '\nCustomer: ' + (customer ? customer.name : 'Unknown') + '\nTotal: Rs. ' + sale.grandTotal + '\nStatus: ' + sale.status);
+            const itemsList = sale.items.map(item => {
+                const product = this.data.products.find(p => p._id === item.productId);
+                return `${product ? product.name : 'Unknown'} x${item.qty} = Rs. ${item.total}`;
+            }).join('\\n');
+            alert('Invoice: ' + (sale.id || sale._id) + 
+                  '\\nCustomer: ' + (customer ? customer.name : 'Unknown') + 
+                  '\\nDate: ' + new Date(sale.date).toLocaleDateString() +
+                  '\\n\\nItems:\\n' + itemsList +
+                  '\\n\\nSubtotal: Rs. ' + sale.subtotal +
+                  '\\nDiscount: Rs. ' + sale.discount +
+                  '\\nGrand Total: Rs. ' + sale.grandTotal + 
+                  '\\nStatus: ' + sale.status.toUpperCase());
         }
     },
 
@@ -650,7 +673,7 @@ const app = {
             html += '<th>Invoice</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>';
             this.data.sales.forEach(s => {
                 const c = this.data.customers.find(cust => cust._id === s.customerId);
-                html += `<tr><td>${s.id}</td><td>${c ? c.name : 'Unknown'}</td><td>Rs. ${s.grandTotal}</td><td>${s.status}</td></tr>`;
+                html += `<tr><td>${s.id || s._id}</td><td>${c ? c.name : 'Unknown'}</td><td>Rs. ${s.grandTotal}</td><td>${s.status}</td></tr>`;
             });
         } else {
             html += '<th>Report</th></tr></thead><tbody><tr><td>Report generated successfully!</td></tr>';
@@ -665,11 +688,41 @@ const app = {
     },
 
     exportData() {
-        this.showToast('Export feature coming soon', 'warning');
+        const data = {
+            products: this.data.products,
+            customers: this.data.customers,
+            sales: this.data.sales,
+            exportDate: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'berry-berry-backup-' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('Data exported successfully!', 'success');
     },
 
     importData() {
-        this.showToast('Import feature coming soon', 'warning');
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    this.showToast('Import feature requires backend sync - data loaded locally only', 'warning');
+                } catch (err) {
+                    this.showToast('Invalid JSON file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     },
 
     addActivity(type, message) {
@@ -697,7 +750,7 @@ const app = {
         query = query.toLowerCase();
         const results = this.data.products.filter(p =>
             p.name.toLowerCase().includes(query) ||
-            p.brand.toLowerCase().includes(query) ||
+            (p.brand && p.brand.toLowerCase().includes(query)) ||
             p.category.toLowerCase().includes(query)
         );
         if (results.length > 0) {
@@ -715,14 +768,15 @@ const app = {
         }
         const tbody = document.getElementById('salesTable');
         const filtered = this.data.sales.filter(s => {
-            if (from && s.date < from) return false;
-            if (to && s.date > to) return false;
+            const saleDate = new Date(s.date).toISOString().split('T')[0];
+            if (from && saleDate < from) return false;
+            if (to && saleDate > to) return false;
             return true;
         });
         tbody.innerHTML = filtered.map(s => {
             const customer = this.data.customers.find(c => c._id === s.customerId);
             const statusClass = s.status === 'paid' ? 'paid' : s.status === 'credit' ? 'credit' : 'pending';
-            return `<tr><td><strong>${s.id}</strong></td><td>${s.date}</td><td>${customer ? customer.name : 'Unknown'}</td><td>${s.items.length} item(s)</td><td>Rs. ${s.grandTotal.toLocaleString()}</td><td>${s.paymentMethod}</td><td><span class="status-badge ${statusClass}">${s.status.toUpperCase()}</span></td><td><button class="btn btn-icon" onclick="app.viewSale('${s.id}')" title="View"><i class="fas fa-eye"></i></button></td></tr>`;
+            return `<tr><td><strong>${s.id || s._id}</strong></td><td>${new Date(s.date).toLocaleDateString()}</td><td>${customer ? customer.name : 'Unknown'}</td><td>${s.items.length} item(s)</td><td>Rs. ${s.grandTotal.toLocaleString()}</td><td>${s.paymentMethod}</td><td><span class="status-badge ${statusClass}">${s.status.toUpperCase()}</span></td><td><button class="btn btn-icon" onclick="app.viewSale('${s._id}')" title="View"><i class="fas fa-eye"></i></button></td></tr>`;
         }).join('');
     },
 
@@ -762,7 +816,7 @@ const app = {
                 type: 'sale',
                 icon: 'fa-cart-shopping',
                 message: 'New sale to ' + (customer ? customer.name : 'Unknown') + ' - Rs. ' + s.grandTotal.toLocaleString(),
-                time: s.date
+                time: new Date(s.date).toLocaleDateString()
             });
         });
 
