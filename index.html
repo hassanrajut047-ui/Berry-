@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Berry Berry Foods and Beverages | Inventory + Credit Management</title>
+    <title>Berry Berry PRO | Inventory + Credit Management</title>
     <link rel="stylesheet" href="styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -154,42 +154,27 @@
     <!-- ===== MODALS ===== -->
     <div class="modal-overlay" id="modalOverlay"></div>
 
-    <!-- ===== ADD PRODUCT (With Expiry Date) ===== -->
+    <!-- ===== ADD PRODUCT ===== -->
     <div class="modal" id="addProductModal">
         <div class="modal-header"><h3><i class="fas fa-bottle-water"></i> Add Product</h3><button class="modal-close" onclick="app.closeModal('addProductModal')"><i class="fas fa-xmark"></i></button></div>
         <form class="modal-body" id="addProductForm">
-            <div class="form-row">
-                <div class="form-group"><label>Name *</label><input type="text" name="name" required /></div>
-                <div class="form-group"><label>Brand</label><input type="text" name="brand" /></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Size *</label><select name="size" required><option>250ml</option><option>500ml</option><option>1L</option><option>1.5L</option><option>5L</option><option>19L</option></select></div>
-                <div class="form-group"><label>Category</label><select name="category" required><option>Mineral Water</option><option>Drinking Water</option><option>Flavored Water</option><option>Dispenser</option></select></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Price (Rs) *</label><input type="number" name="price" required /></div>
-                <div class="form-group"><label>Cost Price</label><input type="number" name="costPrice" /></div>
-            </div>
-            <div class="form-row">
-                <div class="form-group"><label>Initial Stock</label><input type="number" name="stock" required /></div>
-                <div class="form-group"><label>Min Stock</label><input type="number" name="minStock" required /></div>
-            </div>
+            <div class="form-row"><div class="form-group"><label>Name *</label><input type="text" name="name" required /></div><div class="form-group"><label>Brand</label><input type="text" name="brand" /></div></div>
+            <div class="form-row"><div class="form-group"><label>Size *</label><select name="size" required><option>250ml</option><option>500ml</option><option>1L</option><option>1.5L</option><option>5L</option><option>19L</option></select></div><div class="form-group"><label>Category</label><select name="category" required><option>Mineral Water</option><option>Drinking Water</option><option>Flavored Water</option><option>Dispenser</option></select></div></div>
+            <div class="form-row"><div class="form-group"><label>Price (Rs) *</label><input type="number" name="price" required /></div><div class="form-group"><label>Cost Price</label><input type="number" name="costPrice" /></div></div>
+            <div class="form-row"><div class="form-group"><label>Initial Stock</label><input type="number" name="stock" required /></div><div class="form-group"><label>Min Stock</label><input type="number" name="minStock" required /></div></div>
             <div class="form-group"><label>Expiry Date</label><input type="date" name="expiryDate" /></div>
             <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
             <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addProductModal')">Cancel</button><button type="submit" class="btn btn-primary">Add</button></div>
         </form>
     </div>
 
-    <!-- ===== ADD CUSTOMER (With Credit Limit) ===== -->
+    <!-- ===== ADD CUSTOMER ===== -->
     <div class="modal" id="addCustomerModal">
         <div class="modal-header"><h3><i class="fas fa-user-plus"></i> Add Customer</h3><button class="modal-close" onclick="app.closeModal('addCustomerModal')"><i class="fas fa-xmark"></i></button></div>
         <form class="modal-body" id="addCustomerForm">
             <div class="form-row"><div class="form-group"><label>Name *</label><input type="text" name="name" required /></div><div class="form-group"><label>Phone *</label><input type="text" name="phone" required /></div></div>
             <div class="form-group"><label>Address</label><textarea name="address" rows="2"></textarea></div>
-            <div class="form-row">
-                <div class="form-group"><label>Opening Balance</label><input type="number" name="balance" value="0" /></div>
-                <div class="form-group"><label>Credit Limit (Rs)</label><input type="number" name="creditLimit" value="5000" /></div>
-            </div>
+            <div class="form-row"><div class="form-group"><label>Opening Balance</label><input type="number" name="balance" value="0" /></div><div class="form-group"><label>Credit Limit (Rs)</label><input type="number" name="creditLimit" value="5000" /></div></div>
             <div class="modal-footer"><button type="button" class="btn btn-outline" onclick="app.closeModal('addCustomerModal')">Cancel</button><button type="submit" class="btn btn-primary">Add</button></div>
         </form>
     </div>
