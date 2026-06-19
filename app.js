@@ -2,7 +2,6 @@
 // Berry Berry PRO - Backend Connected Version
 // ==========================================
 
-// Polyfill for CanvasRenderingContext2D.roundRect if not available
 if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radii) {
         const r = typeof radii === 'number' ? radii : (radii || 0);
@@ -15,11 +14,8 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     };
 }
 
-// ===== AUTO-DETECT API URL =====
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000/api'
-    : 'https://berry-ashy.vercel.app/api'; // <-- CHANGE THIS TO YOUR ACTUAL VERCEL URL
-// ==============================================================
+// ===== UPDATE THIS URL TO YOUR ACTUAL BACKEND =====
+const API_URL = 'https://berry-ashy.vercel.app/api'; // <-- change if different
 
 let authToken = localStorage.getItem('token') || null;
 let currentUser = null;
@@ -100,7 +96,7 @@ const app = {
         }
     },
 
-    // ---------- Load Data from Server ----------
+    // ---------- Load Data ----------
     async loadData() {
         if (!authToken) {
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -134,21 +130,20 @@ const app = {
         this.loadTheme();
         this.setupEventListeners();
         this.setupNavigation();
-        
+
+        // Set date inputs if they exist
+        const saleDateEl = document.getElementById('saleDate');
+        if (saleDateEl) saleDateEl.valueAsDate = new Date();
+
         if (authToken) {
             document.getElementById('loginOverlay').style.display = 'none';
             this.loadData();
         } else {
             document.getElementById('loginOverlay').style.display = 'flex';
         }
-        
-        document.getElementById('saleDate').valueAsDate = new Date();
-        // REMOVED: document.getElementById('purchaseDate').valueAsDate = new Date();
     },
 
-    setupNavigation() {
-        // Navigation is handled by navClick() onclick in HTML
-    },
+    setupNavigation() { /* handled by onclick */ },
 
     navClick(li, page) {
         this.goToPage(page);
@@ -189,7 +184,7 @@ const app = {
             }
         });
 
-        // Enter key on login
+        // Login with Enter key
         document.getElementById('loginPass').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const username = document.getElementById('loginUser').value;
@@ -203,17 +198,17 @@ const app = {
             }
         });
 
+        // Form submissions
         document.getElementById('addProductForm').addEventListener('submit', (e) => this.handleAddProduct(e));
         document.getElementById('addStockForm').addEventListener('submit', (e) => this.handleAddStock(e));
         document.getElementById('addSaleForm').addEventListener('submit', (e) => this.handleAddSale(e));
         document.getElementById('addCustomerForm').addEventListener('submit', (e) => this.handleAddCustomer(e));
         document.getElementById('companyForm').addEventListener('submit', (e) => this.handleCompanySettings(e));
 
+        // Search and filter
         document.getElementById('inventorySearch').addEventListener('input', () => this.renderInventory());
         document.getElementById('inventoryFilter').addEventListener('change', () => this.renderInventory());
         document.getElementById('globalSearch').addEventListener('input', (e) => this.globalSearch(e.target.value));
-
-        // REMOVED: All addPurchaseForm references that don't exist in HTML
     },
 
     openModal(modalId) {
@@ -252,7 +247,6 @@ const app = {
         const totalStock = this.data.products.reduce((sum, p) => sum + p.stock, 0);
         const lowStock = this.data.products.filter(p => p.stock <= p.minStock).length;
 
-        // FIXED: Proper date comparison
         const today = new Date().toISOString().split('T')[0];
         const todaySales = this.data.sales
             .filter(s => {
@@ -356,8 +350,7 @@ const app = {
             else if (p.stock <= p.minStock) { status = 'low-stock'; statusText = 'Low Stock'; }
 
             const expiryDate = p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A';
-            // FIXED: Use p._id instead of p.id
-            return '<tr><td>#' + p._id.substr(-6).toUpperCase() + '</td><td><strong>' + p.name + '</strong></td><td>' + p.size + '</td><td>' + p.category + '</td><td>' + p.stock + '</td><td>' + p.minStock + '</td><td>Rs. ' + p.price + '</td><td>' + expiryDate + '</td><td><span class="status-badge ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon" onclick="app.deleteProduct(\\'' + p._id + '\\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
+            return '<tr><td>#' + p._id.substr(-6).toUpperCase() + '</td><td><strong>' + p.name + '</strong></td><td>' + p.size + '</td><td>' + p.category + '</td><td>' + p.stock + '</td><td>' + p.minStock + '</td><td>Rs. ' + p.price + '</td><td>' + expiryDate + '</td><td><span class="status-badge ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon" onclick="app.deleteProduct(\'' + p._id + '\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
         }).join('');
     },
 
@@ -369,7 +362,7 @@ const app = {
             if (p.stock === 0) { badgeClass = 'danger'; badgeText = 'Out of Stock'; }
             else if (p.stock <= p.minStock) { badgeClass = 'warning'; badgeText = 'Low Stock'; }
 
-            return '<div class="product-card"><div class="product-image"><i class="fas fa-bottle-water"></i><span class="product-badge status-badge ' + (badgeClass === 'success' ? 'in-stock' : badgeClass === 'warning' ? 'low-stock' : 'out-stock') + '">' + badgeText + '</span></div><div class="product-info"><h4>' + p.name + '</h4><p class="brand">' + (p.brand || 'Berry Berry') + ' | ' + p.category + '</p><p style="font-size:12px;color:var(--text-light)">' + p.size + ' | ' + (p.description || '') + '</p><div class="product-meta"><span class="price">Rs. ' + p.price + '</span><span class="stock">' + p.stock + ' in stock</span></div></div><div class="product-actions"><button onclick="app.deleteProduct(\\'' + p._id + '\\')"><i class="fas fa-trash"></i> Delete</button></div></div>';
+            return '<div class="product-card"><div class="product-image"><i class="fas fa-bottle-water"></i><span class="product-badge status-badge ' + (badgeClass === 'success' ? 'in-stock' : badgeClass === 'warning' ? 'low-stock' : 'out-stock') + '">' + badgeText + '</span></div><div class="product-info"><h4>' + p.name + '</h4><p class="brand">' + (p.brand || 'Berry Berry') + ' | ' + p.category + '</p><p style="font-size:12px;color:var(--text-light)">' + p.size + ' | ' + (p.description || '') + '</p><div class="product-meta"><span class="price">Rs. ' + p.price + '</span><span class="stock">' + p.stock + ' in stock</span></div></div><div class="product-actions"><button onclick="app.deleteProduct(\'' + p._id + '\')"><i class="fas fa-trash"></i> Delete</button></div></div>';
         }).join('');
     },
 
@@ -379,7 +372,6 @@ const app = {
             const customer = this.data.customers.find(c => c._id === s.customerId);
             const customerName = customer ? customer.name : 'Unknown';
             const statusClass = s.status === 'paid' ? 'paid' : s.status === 'credit' ? 'credit' : 'pending';
-            // FIXED: Use s._id for viewSale since backend uses MongoDB _id
             return `<tr><td><strong>${s.id || s._id}</strong></td><td>${new Date(s.date).toLocaleDateString()}</td><td>${customerName}</td><td>${s.items.length} item(s)</td><td>Rs. ${s.grandTotal.toLocaleString()}</td><td>${s.paymentMethod}</td><td><span class="status-badge ${statusClass}">${s.status.toUpperCase()}</span></td><td><button class="btn btn-icon" onclick="app.viewSale('${s._id}')" title="View"><i class="fas fa-eye"></i></button></td></tr>`;
         }).join('');
     },
@@ -389,7 +381,7 @@ const app = {
         tbody.innerHTML = this.data.customers.map(c => {
             const status = c.balance > c.creditLimit ? 'over-limit' : 'good';
             const statusText = c.balance > c.creditLimit ? '⚠️ Over Limit' : '✅ Good';
-            return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.phone + '</td><td>' + (c.orders || 0) + '</td><td>Rs. ' + c.balance.toLocaleString() + '</td><td>Rs. ' + c.creditLimit + '</td><td><span class="customer-status ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon btn-danger" onclick="app.deleteCustomer(\\'' + c._id + '\\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
+            return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.phone + '</td><td>' + (c.orders || 0) + '</td><td>Rs. ' + c.balance.toLocaleString() + '</td><td>Rs. ' + c.creditLimit + '</td><td><span class="customer-status ' + status + '">' + statusText + '</span></td><td><button class="btn btn-icon btn-danger" onclick="app.deleteCustomer(\'' + c._id + '\')" title="Delete"><i class="fas fa-trash"></i></button></td></tr>';
         }).join('');
     },
 
@@ -400,7 +392,7 @@ const app = {
         this.renderCustomers();
     },
 
-    // ---------- CRUD Operations (Backend Connected) ----------
+    // ---------- CRUD Operations ----------
     async handleAddProduct(e) {
         e.preventDefault();
         const form = e.target;
@@ -440,18 +432,13 @@ const app = {
         if (product) {
             const updatedProduct = { ...product };
             updatedProduct.stock += qty;
-            // Optionally update cost price if provided
-            if (unitCost > 0) {
-                updatedProduct.costPrice = unitCost;
-            }
+            if (unitCost > 0) updatedProduct.costPrice = unitCost;
             await this.fetchAPI('/products/' + productId, {
                 method: 'PUT',
                 body: JSON.stringify(updatedProduct)
             });
-            // Update local data
             product.stock = updatedProduct.stock;
             if (unitCost > 0) product.costPrice = unitCost;
-            
             this.addActivity('stock', 'Stock added: ' + product.name + ' +' + qty + ' bottles');
             this.renderAll();
             this.updateDashboard();
@@ -484,7 +471,7 @@ const app = {
         const balance = grandTotal - amountPaid;
 
         const saleData = {
-            id: 'INV-' + Date.now(), // Better unique ID using timestamp
+            id: 'INV-' + Date.now(),
             date: form.date.value,
             customerId: form.customerId.value,
             items,
@@ -503,27 +490,17 @@ const app = {
         });
 
         if (result) {
-            // REMOVED: Don't update customer balance here - backend already does it
-            // REMOVED: Don't deduct stock here - backend already does it
-            
-            // Update local data from server response or reload
             this.data.sales.push(result);
-            
             const customer = this.data.customers.find(c => c._id === saleData.customerId);
             this.addActivity('sale', 'New sale: ' + (customer ? customer.name : 'Unknown') + ' - Rs. ' + grandTotal.toLocaleString());
-            
-            // Reload data to get updated balances and stock from server
-            await this.loadData();
-            
+            await this.loadData(); // refresh data from server
             this.closeModal('addSaleModal');
             form.reset();
             this.resetSaleItems();
             this.showToast('Sale completed successfully!', 'success');
-            
-            // WhatsApp integration
             if (customer && customer.phone) {
                 const msg = `Dear ${customer.name}, your invoice ${saleData.id} for Rs. ${grandTotal} is ready. Balance: Rs. ${balance}. Thank you!`;
-                const url = `https://wa.me/${customer.phone.replace(/\\D/g, '')}?text=${encodeURIComponent(msg)}`;
+                const url = `https://wa.me/${customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
                 window.open(url, '_blank');
             }
         }
@@ -557,7 +534,6 @@ const app = {
         e.preventDefault();
         this.data.settings.companyName = document.getElementById('companyName').value;
         this.data.settings.companyAddress = document.getElementById('companyAddress').value;
-        // REMOVED: companyPhone reference that doesn't exist in HTML
         this.showToast('Company settings saved!', 'success');
     },
 
@@ -647,15 +623,15 @@ const app = {
             const itemsList = sale.items.map(item => {
                 const product = this.data.products.find(p => p._id === item.productId);
                 return `${product ? product.name : 'Unknown'} x${item.qty} = Rs. ${item.total}`;
-            }).join('\\n');
-            alert('Invoice: ' + (sale.id || sale._id) + 
-                  '\\nCustomer: ' + (customer ? customer.name : 'Unknown') + 
-                  '\\nDate: ' + new Date(sale.date).toLocaleDateString() +
-                  '\\n\\nItems:\\n' + itemsList +
-                  '\\n\\nSubtotal: Rs. ' + sale.subtotal +
-                  '\\nDiscount: Rs. ' + sale.discount +
-                  '\\nGrand Total: Rs. ' + sale.grandTotal + 
-                  '\\nStatus: ' + sale.status.toUpperCase());
+            }).join('\n');
+            alert('Invoice: ' + (sale.id || sale._id) +
+                  '\nCustomer: ' + (customer ? customer.name : 'Unknown') +
+                  '\nDate: ' + new Date(sale.date).toLocaleDateString() +
+                  '\n\nItems:\n' + itemsList +
+                  '\n\nSubtotal: Rs. ' + sale.subtotal +
+                  '\nDiscount: Rs. ' + sale.discount +
+                  '\nGrand Total: Rs. ' + sale.grandTotal +
+                  '\nStatus: ' + sale.status.toUpperCase());
         }
     },
 
